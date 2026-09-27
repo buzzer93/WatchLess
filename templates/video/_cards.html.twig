@@ -1,0 +1,16 @@
+<div class="video-grid">
+{% for video in videos %}
+    <article class="video-card"><a class="card-link" href="{{ path('video_show', {id: video.id}) }}">
+        <div class="thumbnail">
+            {% if video.thumbnailUrl %}<img src="{{ video.thumbnailUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="placeholder-icon" aria-hidden="true">▷</span>{% endif %}
+            {% if video.duration is not null %}<span class="duration">{{ video.duration|duration }}</span>{% endif %}
+        </div>
+        <div class="card-content"><span class="status status-{{ video.status.value }}">{{ video.status.label }}</span>
+        <h3>{{ video.title ?? ('Vidéo ' ~ video.youtubeId) }}</h3>
+        <p>{{ video.channelName ?? 'Informations en cours de récupération' }}</p>
+        <small>Ajoutée le {{ video.createdAt|date('d/m/Y à H:i', 'Europe/Paris') }}</small></div>
+    </a><div class="card-actions"><a class="danger-link" href="{{ path('video_delete', {id: video.id}) }}" aria-label="Supprimer {{ video.title ?? video.youtubeId }}">Supprimer</a></div></article>
+{% else %}
+    <div class="empty-state"><span aria-hidden="true">▷</span><h3>Aucune vidéo pour le moment</h3><p>Collez un lien YouTube pour créer votre premier compte rendu.</p></div>
+{% endfor %}
+</div>

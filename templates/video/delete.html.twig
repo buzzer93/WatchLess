@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+{% block title %}Supprimer une vidéo — WatchLess{% endblock %}
+{% block body %}
+<a class="back-link" href="{{ path('video_show', {id: video.id}) }}">← Retour à la vidéo</a>
+<section class="reading-panel">
+    <h1 class="delete-title">Supprimer cette vidéo ?</h1>
+    <p><strong>{{ video.title ?? ('Vidéo ' ~ video.youtubeId) }}</strong></p>
+    <p>La vidéo disparaîtra de votre bibliothèque WatchLess avec sa transcription et son compte rendu. Cette action est définitive et ne supprime rien sur YouTube.</p>
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="{{ path('video_delete', {id: video.id}) }}" class="delete-actions">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete-video-' ~ video.id) }}">
+        <a href="{{ path('video_show', {id: video.id}) }}">Annuler</a>
+        <button class="danger-button" type="submit">Supprimer définitivement</button>
+    </form>
+</section>
+{% endblock %}

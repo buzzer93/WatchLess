@@ -1,0 +1,21 @@
+framework:
+    messenger:
+        failure_transport: failed
+        transports:
+            async:
+                dsn: 'doctrine://default'
+                options:
+                    auto_setup: false
+                    queue_name: async
+                    redeliver_timeout: '%env(int:WORKER_REDELIVER_TIMEOUT)%'
+                retry_strategy:
+                    max_retries: 0
+            failed:
+                dsn: 'doctrine://default'
+                options:
+                    auto_setup: false
+                    queue_name: failed
+        routing:
+            App\Message\AnalyzeVideo: async
+            App\Message\SummarizeTopic: async
+            App\Message\GenerateTopicPublication: async

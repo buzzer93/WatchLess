@@ -1,0 +1,16 @@
+# Replace the domain, path and password hash before using this file.
+watchless.example.com {
+    basic_auth {
+        watchless REPLACE_WITH_CADDY_HASH_PASSWORD_OUTPUT
+    }
+    root * /srv/watchless/public
+    php_fastcgi unix//run/php/php8.3-fpm.sock
+    file_server
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+        Content-Security-Policy "default-src 'self'; img-src 'self' https://i.ytimg.com data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    }
+}

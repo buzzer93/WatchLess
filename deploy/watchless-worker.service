@@ -1,0 +1,24 @@
+[Unit]
+Description=WatchLess Messenger worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/watchless
+Environment=APP_ENV=prod
+Environment=APP_DEBUG=0
+Environment=WORKER_REDELIVER_TIMEOUT=300
+Environment=PATH=/srv/watchless/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/php bin/console messenger:consume async --keepalive=60 --time-limit=3600 --memory-limit=256M -v
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=6h
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

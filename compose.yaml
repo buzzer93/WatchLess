@@ -1,0 +1,135 @@
+name: watchless
+
+x-app-environment: &app-environment
+  APP_ENV: prod
+  APP_DEBUG: '0'
+  DATABASE_URL: sqlite:////app/var/watchless.db
+  LOCK_DSN: flock:///app/var/locks
+  # Une transcription peut durer plusieurs heures : ne redonnez pas le même
+  # message à un autre worker pendant que le premier le traite.
+  WORKER_REDELIVER_TIMEOUT: ${WORKER_REDELIVER_TIMEOUT:-21600}
+  TRANSCRIPTION_PROVIDER: local
+  WHISPER_BINARY: whisper
+  WHISPER_MODEL: ${WATCHLESS_WHISPER_MODEL:-base}
+  WHISPER_TIMEOUT: '14400'
+  YTDLP_BINARY: yt-dlp
+  YTDLP_JS_RUNTIME: node
+  FFMPEG_BINARY: ffmpeg
+  LLM_BASE_URL: http://ollama:11434/v1
+  LLM_API_KEY: ''
+  LLM_MODEL: watchless
+  LLM_TOKEN_PARAMETER: max_tokens
+  LLM_REASONING_EFFORT: none
+  LLM_TIMEOUT: '1800'
+  LLM_MAX_OUTPUT_TOKENS: '6000'
+  LLM_CLOUD_ENABLED: ${LLM_CLOUD_ENABLED:-0}
+  LLM_CLOUD_BASE_URL: ${LLM_CLOUD_BASE_URL:-https://api.openai.com/v1}
+  LLM_CLOUD_API_KEY: ${LLM_CLOUD_API_KEY:-}
+  LLM_CLOUD_MODEL: ${LLM_CLOUD_MODEL:-}
+  LLM_CLOUD_MAX_OUTPUT_TOKENS: ${LLM_CLOUD_MAX_OUTPUT_TOKENS:-6000}
+  LLM_CLOUD_TOKEN_PARAMETER: ${LLM_CLOUD_TOKEN_PARAMETER:-max_completion_tokens}
+  LLM_CLOUD_REASONING_EFFORT: ${LLM_CLOUD_REASONING_EFFORT:-}
+  LLM_CLOUD_TIMEOUT: ${LLM_CLOUD_TIMEOUT:-1800}
+  TRANSCRIPT_CHUNK_BYTES: '12000'
+
+services:
+  init:
+    build:
+      context: .
+      target: app
+    image: watchless-app:local
+    environment: *app-environment
+    volumes:
+      - app-data:/app/var
+    command: ['sh', 'docker/init.sh']
+    restart: 'no'
+
+  app:
+    image: watchless-app:local
+    build:
+      context: .
+      target: app
+    environment: *app-environment
+    volumes:
+      - app-data:/app/var
+    entrypoint: ['sh', 'docker/start.sh']
+    command: ['php-fpm']
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'php', '-r', 'exit(@fsockopen("127.0.0.1", 9000) ? 0 : 1);']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - '127.0.0.1:${WATCHLESS_PORT:-8090}:80'
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      target: worker
+    environment: *app-environment
+    volumes:
+      - app-data:/app/var
+    entrypoint: ['sh', 'docker/start.sh']
+    command: ['php', 'bin/console', 'messenger:consume', 'async', '--keepalive=60', '--time-limit=3600', '--memory-limit=256M', '-v']
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      model-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 6h
+
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: '1'
+      OLLAMA_NUM_PARALLEL: '1'
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  model-init:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_BASE_MODEL: ${WATCHLESS_BASE_MODEL:-qwen3.5:9b}
+    volumes:
+      - ./docker/model-init.sh:/model-init.sh:ro
+    entrypoint: ['sh', '/model-init.sh']
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: 'no'
+
+  tests:
+    profiles: [test]
+    build:
+      context: .
+      target: test
+    environment:
+      APP_ENV: test
+      APP_DEBUG: '1'
+      DATABASE_URL: 'sqlite:///:memory:'
+
+volumes:
+  app-data:
+  ollama-models:

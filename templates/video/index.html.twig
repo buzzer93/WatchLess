@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mes vidéos — WatchLess{% endblock %}
+{% block body %}
+<section class="page-heading"><p class="eyebrow">VOTRE BIBLIOTHÈQUE</p><h1>Mes vidéos</h1><p>Retrouvez les idées qui méritent d’être gardées.</p></section>
+<form method="get" class="search-form"><label for="search">Rechercher dans les titres</label><div class="input-row"><input id="search" type="search" name="q" value="{{ query }}" placeholder="Un titre, un sujet…" maxlength="200"><button>Rechercher</button></div></form>
+{% if query and videos is empty %}<div class="empty-state"><h2>Aucun résultat</h2><p>Essayez un autre titre.</p><a href="{{ path('video_index') }}">Afficher toutes les vidéos</a></div>{% else %}{% include 'video/_cards.html.twig' %}{% endif %}
+<nav class="pagination" aria-label="Pagination">{% if page > 1 %}<a href="{{ path('video_index', {q: query, page: page - 1}) }}">← Précédente</a>{% endif %}<span>Page {{ page }}</span>{% if videos|length == 24 %}<a href="{{ path('video_index', {q: query, page: page + 1}) }}">Suivante →</a>{% endif %}</nav>
+{% endblock %}

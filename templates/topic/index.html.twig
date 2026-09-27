@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mes sujets — WatchLess{% endblock %}
+{% block body %}
+<section class="page-heading"><p class="eyebrow">VOTRE ESPACE DE COMPRÉHENSION</p><h1>Mes sujets</h1><p>Ouvrez un sujet, ajoutez vos liens YouTube et retrouvez les comptes rendus de ses vidéos au même endroit.</p></section>
+<section class="reading-panel"><h2>Créer un sujet</h2>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ path('topic_index') }}" class="topic-form"><input type="hidden" name="_token" value="{{ csrf_token('create-topic') }}"><label for="name">Nom du sujet</label><input id="name" name="name" required maxlength="200" placeholder="Ex. Les agents IA pour mon entreprise"><label for="intent">Intention du sujet <span class="muted">(facultatif)</span></label><select id="intent" name="intent"><option value="">Général</option><option value="veille">Veille</option><option value="apprentissage">Apprentissage</option><option value="projet">Projet / action</option><option value="decision">Aide à la décision</option><option value="comparaison">Comparaison</option><option value="inspiration">Inspiration</option></select><button class="button" type="submit">Créer le sujet</button></form></section>
+{% for topic in topics %}<article class="reading-panel"><h2><a href="{{ path('topic_show', {id: topic.id}) }}">{{ topic.name }}</a></h2><p>{{ topic.videos|length }} vidéo(s) · {{ topic.intentLabel }} · {{ topic.statusLabel }}</p>{% if topic.description %}<p>{{ topic.description }}</p>{% endif %}</article>{% else %}<p class="muted">Créez votre premier sujet, puis collez vos liens YouTube directement à l’intérieur.</p>{% endfor %}
+{% endblock %}

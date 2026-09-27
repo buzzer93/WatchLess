@@ -1,0 +1,19 @@
+# Optional Xiaomi API preset. Local Whisper and the local fallback are unchanged.
+# Configure LLM_CLOUD_API_KEY in .env.local, then run:
+# docker compose --env-file .env.local -f compose.yaml -f compose.mimo.yaml up -d
+x-mimo-environment: &mimo-environment
+  LLM_CLOUD_ENABLED: '1'
+  LLM_CLOUD_BASE_URL: https://api.xiaomimimo.com/v1
+  LLM_CLOUD_API_KEY: ${LLM_CLOUD_API_KEY:?Configure LLM_CLOUD_API_KEY in .env.local}
+  LLM_CLOUD_MODEL: ${LLM_CLOUD_MODEL:-mimo-v2.6-pro}
+  LLM_CLOUD_TOKEN_PARAMETER: max_completion_tokens
+  LLM_CLOUD_REASONING_EFFORT: ''
+  LLM_CLOUD_MAX_OUTPUT_TOKENS: '16000'
+
+services:
+  init:
+    environment: *mimo-environment
+  app:
+    environment: *mimo-environment
+  worker:
+    environment: *mimo-environment

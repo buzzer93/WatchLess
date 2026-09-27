@@ -1,0 +1,12 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+    App\:
+        resource: '../src/'
+        exclude: '../src/{Entity,Enum,Message,Kernel.php,Transcription/TranscriptionResult.php}'
+    App\Transcription\TranscriptionProviderInterface: '@App\Transcription\ConfiguredTranscriptionProvider'
+    App\Llm\FallbackLlmProvider:
+        arguments:
+            $cloudEnabled: '%env(bool:LLM_CLOUD_ENABLED)%'
+    App\Llm\LlmProviderInterface: '@App\Llm\FallbackLlmProvider'

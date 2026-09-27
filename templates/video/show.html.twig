@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ video.title ?? 'Analyse en cours' }} — WatchLess{% endblock %}
+{% block body %}
+{% if topic %}<a class="back-link" href="{{ path('topic_show', {id: topic.id}) }}">← {{ topic.name }}</a>{% else %}<a class="back-link" href="{{ path('home') }}">← Mes sujets</a>{% endif %}
+<a class="danger-link delete-link" href="{{ path('video_delete', {id: video.id}) }}">Supprimer cette vidéo</a>
+<section class="video-header">
+    {% if video.thumbnailUrl %}<img class="cover" src="{{ video.thumbnailUrl }}" alt="" referrerpolicy="no-referrer">{% endif %}
+    <div><p class="eyebrow">FICHE VIDÉO</p><h1>{{ video.title ?? 'Votre vidéo est en attente' }}</h1><p>{{ video.channelName ?? 'YouTube' }} <span aria-hidden="true">·</span> {{ video.duration|duration }}</p><a href="{{ video.url }}" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a></div>
+</section>
+<div class="progress-box" {% if not video.status.terminal %}data-status-url="{{ path('video_status', {id: video.id}) }}" data-status="{{ video.status.value }}"{% endif %}>
+    <span class="status status-{{ video.status.value }}" role="status">{{ video.status.label }}</span>
+    {% if not video.status.terminal %}<p>Le traitement continue en arrière-plan. Vous pouvez quitter cette page et revenir plus tard.</p><small data-poll-message>Le statut se met à jour automatiquement.</small>{% endif %}
+    {% if video.errorMessage %}<p class="error" role="alert">{{ video.errorMessage }}</p><p>La transcription déjà enregistrée reste consultable.{% if video.hasTranscript %} Vous pouvez relancer le compte rendu avec le bouton ci-dessous.{% endif %}</p>{% endif %}
+</div>
+<nav class="section-nav" aria-label="Sections de la vidéo"><a href="#summary">Compte rendu</a><a href="#transcript">Transcription</a><a href="#info">Informations</a></nav>
+<section class="reading-panel" id="summary"><h2>Compte rendu</h2>
+<form method="post" action="{{ path('video_regenerate', {id: video.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('regenerate-video-' ~ video.id) }}">{% if topic %}<input type="hidden" name="topic" value="{{ topic.id }}">{% endif %}<button type="submit" {% if not video.hasTranscript or not video.status.terminal %}disabled{% endif %}>{{ video.summary ? 'Régénérer le compte rendu' : 'Relancer le compte rendu' }}</button></form>
+<p class="muted">La relance réutilise la transcription enregistrée. L’ancien compte rendu reste consultable jusqu’à la réussite du nouveau.{% if video.summary and video.status.value != 'completed' %} Le texte ci-dessous est le précédent compte rendu.{% endif %}</p>
+{% if video.summary %}<div class="prose">{{ video.summary|safe_markdown }}</div>{% else %}<p class="muted">Le compte rendu détaillé apparaîtra ici après l’analyse de la transcription.</p>{% endif %}</section>
+<section class="reading-panel" id="transcript"><details {% if video.hasTranscript and not video.summary %}open{% endif %}><summary>Transcription complète{% if video.transcript matches '/^\\d{2}:\\d{2}:\\d{2}/m' %} — horodatée{% endif %}</summary>{% if video.hasTranscript %}<div class="transcript">{{ video.transcript }}</div><p class="muted">Une seule transcription est conservée ; les horodatages sont intégrés à chaque ligne.</p>{% else %}<p class="muted">La transcription n’est pas encore disponible.</p>{% endif %}</details></section>
+<section class="reading-panel" id="info"><h2>Informations</h2><dl class="metadata"><dt>Identifiant YouTube</dt><dd>{{ video.youtubeId }}</dd><dt>Publication</dt><dd>{{ video.publishedAt ? video.publishedAt|date('d/m/Y') : 'Non disponible' }}</dd><dt>Langue</dt><dd>{{ video.transcriptLanguage ?? 'Non disponible' }}</dd><dt>Source de transcription</dt><dd>{{ video.transcriptSource ?? 'Non disponible' }}</dd><dt>Ajoutée le</dt><dd>{{ video.createdAt|date('d/m/Y à H:i', 'Europe/Paris') }}</dd><dt>Dernière mise à jour</dt><dd>{{ video.updatedAt|date('d/m/Y à H:i', 'Europe/Paris') }}</dd></dl></section>
+{% endblock %}

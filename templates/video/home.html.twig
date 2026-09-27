@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+<section class="hero">
+    <p class="eyebrow">VOTRE TEMPS EST PRÉCIEUX</p>
+    <h1>Regardez moins.<br><span>Comprenez plus.</span></h1>
+    <p class="hero-description">Transformez une vidéo YouTube en un compte rendu détaillé.<br>Les idées, les méthodes et les exemples, à votre rythme.</p>
+    <form action="{{ path('video_submit') }}" method="post" class="analyze-form">
+        <input type="hidden" name="_token" value="{{ csrf_token('submit-video') }}">
+        <label for="video-url">Le lien de votre vidéo YouTube</label>
+        <div class="input-row"><input id="video-url" name="url" type="url" required maxlength="2048" placeholder="https://www.youtube.com/watch?v=…" value="{{ url }}" {% if error %}aria-invalid="true" aria-describedby="url-error"{% endif %}><button type="submit">Analyser la vidéo <span aria-hidden="true">↗</span></button></div>
+        {% if error %}<p id="url-error" class="error" role="alert">{{ error }}</p>{% endif %}
+        <p class="form-hint">Transcription complète · Compte rendu structuré · Conservés dans votre historique</p>
+    </form>
+</section>
+<section class="recent"><div class="section-heading"><h2>Vos dernières vidéos</h2><a href="{{ path('video_index') }}">Tout l’historique <span aria-hidden="true">→</span></a></div>
+{% include 'video/_cards.html.twig' %}</section>
+{% endblock %}
